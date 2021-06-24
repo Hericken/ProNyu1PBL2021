@@ -33,6 +33,8 @@ int main(int argc, char const** argv)
     int width, height;
     led_canvas_get_size(offscreen_canvas, &width, &height);
 
+
+
     //みなさんが書き換えるのはこれ以降の部分
     int i, j;
     img bmp_img_data;   //BMPファイルを読み込むためのimg変数
@@ -63,6 +65,5 @@ int main(int argc, char const** argv)
         }
     }
     led_matrix_swap_on_vsync(matrix, offscreen_canvas);
-    //みなさんが書き換えるのはここまで
     return 0;
 }
