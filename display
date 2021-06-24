@@ -13,6 +13,8 @@ file はシュミレートする実行ファイル
 --fps=VALUE             動画のfps(>0 <=60) (default:30)
 '
 
+mkdir -p obj
+
 TIMEOUT_PATH=$(command -v timeout)
 TIMEOUT_PATH=${TIMEOUT_PATH:-"vendor/timeout"}
 FFMPEG_PATH=$(command -v ffmpeg)

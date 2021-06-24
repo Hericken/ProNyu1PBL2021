@@ -30,6 +30,8 @@ int main(int argc, char const** argv)
         return -1;
     }
 
+    int width, height;
+    led_canvas_get_size(offscreen_canvas, &width, &height);
 
     //みなさんが書き換えるのはこれ以降の部分
     int i;
