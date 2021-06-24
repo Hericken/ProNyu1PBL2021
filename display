@@ -1,0 +1,95 @@
+#! /bin/bash
+
+usage_msg='Usage: ./display file [options]
+file はシュミレートする実行ファイル
+
+実機動作と共通 option
+--led-cols=SIZE         LED列数を SIZE に指定(default:64)
+--led-rows=SIZE         LED行数を SIZE に指定(default:64)
+
+シュミレート option
+--disable-recording     動画を作成せず静止画を出力する
+--format=FORMAT         動画の拡張子(mp4, gif, mkv...)を変更(default:gif)
+--fps=VALUE             動画のfps(>0 <=60) (default:30)
+'
+
+TIMEOUT_PATH=$(command -v timeout)
+TIMEOUT_PATH=${TIMEOUT_PATH:-"vendor/timeout"}
+FFMPEG_PATH=$(command -v ffmpeg)
+FFMPEG_PATH=${FFMPEG_PATH:-"vendor/ffmpeg"}
+
+if [ $# -lt 1 ]; then
+    printf "${usage_msg}"
+    exit 2
+fi
+
+TARGET=$1
+shift
+
+# デフォルトの値
+ENCORD_REQUIRED=1
+FILE_FORMAT="gif"
+FPS=30
+
+while getopts "t:l-:" opt; do
+    optarg="$OPTARG"
+    [[ "$opt" = - ]] &&
+        opt="-${OPTARG%%=*}" &&
+        optarg="${OPTARG/${OPTARG%%=*}/}" &&
+        optarg="${optarg#=}"
+
+    case "-$opt" in
+            --disable-recording)
+                ENCORD_REQUIRED=0
+                ;;
+            --format)
+                FILE_FORMAT=${optarg}
+                ;;
+            --fps)
+                if [ $optarg -le 0 ] || [ $optarg -gt 30 ]; then
+                    FPS=30
+                else
+                    FPS="$optarg"
+                fi
+                ;;
+            --*)
+                echo "$0: illegal option -- ${opt##-}" >&2
+                ;;
+    esac
+done
+printf "Running virtual LED display (timeout:30s)... "
+# "--foreground" によって Ctrl-C でも終了できるようにする
+${TIMEOUT_PATH} --foreground 30 ./${TARGET} $@
+printf "Done\n"
+
+if [ ${ENCORD_REQUIRED} -eq 0 ]; then
+    exit 0
+fi
+
+if [ ! -e log/rectmp/0001.bmp ]; then
+    printf "No bmp file in 'log/rectmp' directory\n"
+    exit 2
+fi
+
+
+#連番画像から動画生成
+printf "Writing to video file... "
+VIDEO_FILE="log/rectmp/tmp.${FILE_FORMAT}"
+
+${FFMPEG_PATH} -framerate ${FPS} -i log/rectmp/%04d.bmp -r ${FPS} ${VIDEO_FILE} -loglevel fatal
+
+if [ $? = 0 ]; then
+    printf "Done\n"
+else
+    printf "Failure\n"
+    exit 2
+fi
+
+rm log/rectmp/*.bmp
+if [ ! -e ${VIDEO_FILE} ]; then
+    printf "'${VIDEO_FILE}': No such file\n"
+    exit 2
+fi
+TIME=$(date +%m%d_%H-%M-%S)
+mv ${VIDEO_FILE} log/led_matrix${TIME}.${FILE_FORMAT}
+printf "save to file 'log/led_matrix${TIME}.${FILE_FORMAT}'\n"

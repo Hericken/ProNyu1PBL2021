@@ -1,0 +1,32 @@
+#! /bin/bash
+
+mkdir -p obj
+
+#timeout(GNU coreutils)の導入
+
+if [[ ! -x $(command -v timeout) ]] && [[ ! -x $(command -v vendor/coreutils-8.32/src/timeout) ]]; then
+    mkdir -p vendor
+    cd vendor
+    wget http://ftp.gnu.org/gnu/coreutils/coreutils-8.32.tar.gz
+    tar zxvf coreutils-8.32.tar.gz
+    rm coreutils-8.32.tar.gz
+    cd coreutils-8.32
+    mkdir coreutils
+    ./configure
+    make
+    cd ../../
+fi
+
+#ffmpegの導入
+
+if [[ ! -x $(command -v ffmpeg) ]] && [[ ! -x $(command -v vendor/ffmpeg-4.2.3/ffmpeg) ]]; then
+    mkdir -p vendor
+    cd vendor
+    wget http://ffmpeg.org/releases/ffmpeg-4.2.3.tar.bz2
+    tar -jvxf ffmpeg-4.2.3.tar.bz2
+    rm ffmpeg-4.2.3.tar.bz2
+    cd ffmpeg-4.2.3
+    ./configure --disable-x86asm --disable-doc --disable-htmlpages --disable-manpages --disable-podpages --disable-txtpages
+    make
+    cd ../
+fi
